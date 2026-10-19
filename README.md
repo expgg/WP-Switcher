@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/Manifest-V3-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3">
   <img src="https://img.shields.io/badge/Privacy-100%25%20Local-ff007f?style=for-the-badge&logo=shield&logoColor=white" alt="100% Local">
   <img src="https://img.shields.io/badge/Chrome-Compatible-00e676?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome">
-  <img src="https://img.shields.io/badge/Version-1.0.5-00b0ff?style=for-the-badge" alt="Version 1.0.5">
+  <img src="https://img.shields.io/badge/Version-1.0.6-00b0ff?style=for-the-badge" alt="Version 1.0.6">
   <img src="https://img.shields.io/badge/License-MIT-ffab00?style=for-the-badge" alt="License: MIT">
 </p>
 
@@ -146,10 +146,14 @@ Click **Check for Updates** in the popup footer at any time. The extension will 
 
 ### Releases & Changelog
 
-#### `v1.0.5` (Current)
-- 🏷️ **Native Header Title Replacement**: Replaced the default top-left "WhatsApp" text in WhatsApp Web with the WP Switcher switch logo and current active account name/alias.
+#### `v1.0.6` (Current)
+- 🚀 **Robust Multi-Strategy Header Detection**: Added bidirectional Unicode normalization (`\u200E` directional marks), SVG container detection, and layout-based fallback to reliably detect and replace WhatsApp Web's top-left branding across all modern UI builds.
+- 🏷️ **Native Header Title Replacement**: Replaced the default top-left "WhatsApp" title in WhatsApp Web with the WP Switcher switch logo and current active account name/alias.
 - 🎨 **Adaptive Theme Syncing**: The header switch badge dynamically mirrors the account's custom accent color and updates immediately when an alias or theme is edited in the popup.
 - 🛡️ **Zero-Flicker SPA Persistence**: Integrated DOM observers and state deduplication so navigation between chats, search, and status tabs maintains the branded account title seamlessly without flicker.
+
+#### `v1.0.5`
+- 🏷️ **Native Header Title Replacement**: Replaced default top-left header with switch logo badge and account name.
 
 #### `v1.0.4`
 - 📏 **Clean Flat Tab Accent Bar**: Removed the ambient glow and fade effect from the in-tab top accent strip, making it a clean, razor-sharp 3px solid indicator.

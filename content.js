@@ -24,6 +24,8 @@
   // ═══════════════════════════════════════════════════════════════════════════
   // Tab Accent Color Theme & Header Replacement
   // ═══════════════════════════════════════════════════════════════════════════
+  let hasLoggedInit = false;
+
   async function applyTabAccentTheme() {
     if (window.top !== window) return; // Only apply on top frame
 
@@ -37,6 +39,11 @@
       let displayName = (session && session.name && session.name !== 'Chats') 
         ? session.name 
         : (rawPhone || (currentSessionId === 'main' ? 'Main Account' : ('Account ' + currentSessionId.replace('acc_', ''))));
+
+      if (!hasLoggedInit) {
+        hasLoggedInit = true;
+        console.log(`%c[WP Switcher]%c Tab active for session: "${currentSessionId}" (Display: "${displayName}", Color: "${color}")`, 'color: #a855f7; font-weight: bold;', 'color: inherit;');
+      }
 
       // 1. Clean flat 3px solid accent bar across top edge (no glow, no fade)
       let bar = document.getElementById('wps-tab-accent-bar');
@@ -72,75 +79,147 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
+  // Multi-Strategy WhatsApp Header / Logo Element Detector
+  // ═══════════════════════════════════════════════════════════════════════════
+  function findWhatsAppHeaderElement() {
+    // 0. If already replaced and still alive in DOM, return our element
+    const existing = document.querySelector('[data-wps-replaced="true"]');
+    if (existing && document.contains(existing)) {
+      return existing;
+    }
+
+    // Strategy 1: Normalized Text Content Match (handles unicode directional marks \u200E, \u200F, \u202A, etc.)
+    const textCandidates = document.querySelectorAll('h1, h2, h3, h4, span, div, a, p');
+    let bestTextEl = null;
+    let smallestArea = Infinity;
+
+    for (const el of textCandidates) {
+      const raw = el.textContent || '';
+      if (!raw || raw.length > 50) continue;
+
+      // Strip all whitespace, directional marks (\u2000-\u206F), and invisible unicode characters
+      const clean = raw.replace(/[\u2000-\u206F\uFEFF\s\r\n\t]+/g, '').toLowerCase();
+      if (clean === 'whatsapp' || clean === 'chats') {
+        const rect = el.getBoundingClientRect();
+        if (rect.top >= 0 && rect.top < 140 && rect.left >= 30 && rect.left < 550 && rect.width > 0 && rect.height > 0) {
+          const area = rect.width * rect.height;
+          if (area < smallestArea) {
+            smallestArea = area;
+            bestTextEl = el;
+          }
+        }
+      }
+    }
+    if (bestTextEl) {
+      const heading = bestTextEl.closest('h1, h2, h3, [role="heading"]');
+      return heading || bestTextEl;
+    }
+
+    // Strategy 2: Data-icon / SVG brand logo
+    const iconCandidates = document.querySelectorAll(
+      '[data-icon="whatsapp"], [data-icon="whatsapp-logo"], [data-icon="whatsapp-wordmark"], [data-icon*="whatsapp"], [data-testid*="whatsapp-logo"], [data-testid="chatlist-header"]'
+    );
+    for (const el of iconCandidates) {
+      const rect = el.getBoundingClientRect();
+      if (rect.top >= 0 && rect.top < 140 && rect.left >= 30 && rect.left < 550 && rect.width > 0) {
+        return el;
+      }
+    }
+
+    // Strategy 3: Aria-label or title or alt matching "WhatsApp" (case-insensitive)
+    const ariaCandidates = document.querySelectorAll(
+      '[aria-label*="whatsapp" i], [title*="whatsapp" i], img[alt*="whatsapp" i]'
+    );
+    for (const el of ariaCandidates) {
+      const rect = el.getBoundingClientRect();
+      if (rect.top >= 0 && rect.top < 140 && rect.left >= 30 && rect.left < 550 && rect.width > 0 && rect.width < 400) {
+        return el;
+      }
+    }
+
+    // Strategy 4: Structural layout - Container to the left of action buttons (Menu, New Chat)
+    const actionBtn = document.querySelector(
+      '[data-icon="menu"], [aria-label*="menu" i], [data-icon="new-chat-outline"], [data-icon="chat"], [aria-label*="new chat" i]'
+    );
+    if (actionBtn) {
+      let row = actionBtn.parentElement;
+      for (let depth = 0; depth < 5 && row; depth++) {
+        const rect = row.getBoundingClientRect();
+        if (rect.top >= 0 && rect.top < 140 && rect.height >= 30 && rect.height <= 90 && rect.left < 300) {
+          const firstChild = row.firstElementChild;
+          if (firstChild && firstChild !== actionBtn && !firstChild.contains(actionBtn)) {
+            const fcRect = firstChild.getBoundingClientRect();
+            if (fcRect.left >= 30 && fcRect.left < 400 && fcRect.width > 0) {
+              return firstChild;
+            }
+          }
+        }
+        row = row.parentElement;
+      }
+    }
+
+    // Strategy 5: Any SVG in top-left chatlist header quadrant
+    const svgs = document.querySelectorAll('svg');
+    for (const svg of svgs) {
+      const rect = svg.getBoundingClientRect();
+      if (rect.top >= 5 && rect.top < 100 && rect.left >= 45 && rect.left < 350 && rect.width >= 15 && rect.height >= 15) {
+        const parentBtn = svg.closest('button, [role="button"]');
+        const aria = parentBtn ? (parentBtn.getAttribute('aria-label') || '') : '';
+        if (!/search|menu|chat|new|status|channel|community|settings/i.test(aria)) {
+          return svg.closest('span, div') || svg.parentElement || svg;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  // ═══════════════════════════════════════════════════════════════════════════
   // Replace "WhatsApp" Header Title with WP Switcher Logo & Account Name
   // ═══════════════════════════════════════════════════════════════════════════
   function replaceWhatsAppHeaderTitle(displayName, color) {
     if (!displayName) return;
 
-    // Search for header elements
-    const headers = document.querySelectorAll('header, #side header, [data-testid="chatlist-header"]');
-    let targetEl = null;
+    let targetEl = findWhatsAppHeaderElement();
+    if (!targetEl) return;
 
-    for (const h of headers) {
-      const walker = document.createTreeWalker(h, NodeFilter.SHOW_ELEMENT, null, false);
-      while (walker.nextNode()) {
-        const node = walker.currentNode;
-        if (node.children.length === 0 && node.textContent.trim() === 'WhatsApp') {
-          const rect = node.getBoundingClientRect();
-          if (rect.top >= 0 && rect.top < 140 && rect.left >= 0 && rect.left < 500) {
-            targetEl = node;
-            break;
-          }
-        }
-      }
-      if (targetEl) break;
+    // If target is SVG or path, climb up to a container element
+    if (targetEl.tagName && (targetEl.tagName.toLowerCase() === 'svg' || targetEl.tagName.toLowerCase() === 'path')) {
+      targetEl = targetEl.closest('span, div, a, h1, h2, h3') || targetEl.parentElement;
+    }
+    if (!targetEl) return;
+
+    // Avoid re-rendering if already matching current state
+    if (targetEl.dataset.wpsName === displayName && targetEl.dataset.wpsColor === color) {
+      return;
     }
 
-    // Fallback: search all elements in top-left region
-    if (!targetEl) {
-      const candidates = document.querySelectorAll('h1, h2, span, div');
-      for (const el of candidates) {
-        if (el.children.length === 0 && el.textContent.trim() === 'WhatsApp') {
-          const rect = el.getBoundingClientRect();
-          if (rect.top >= 0 && rect.top < 140 && rect.left >= 0 && rect.left < 500 && rect.width > 0) {
-            targetEl = el;
-            break;
-          }
-        }
-      }
-    }
+    targetEl.dataset.wpsName = displayName;
+    targetEl.dataset.wpsColor = color;
+    targetEl.dataset.wpsReplaced = 'true';
 
-    if (targetEl) {
-      // Avoid re-rendering if already matching current state
-      if (targetEl.dataset.wpsName === displayName && targetEl.dataset.wpsColor === color) {
-        return;
-      }
+    const switchLogoSvg = `
+      <span style="display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 22px !important; height: 22px !important; background: #ffffff !important; border-radius: 6px !important; box-shadow: 0 0 10px ${color}80 !important; flex-shrink: 0 !important; margin-right: 8px !important;">
+        <svg viewBox="0 0 24 24" style="width: 15px !important; height: 15px !important; display: block !important;">
+          <rect x="2" y="6" width="20" height="12" rx="6" fill="${color}" />
+          <circle cx="16" cy="12" r="4.2" fill="#ffffff" />
+          <circle cx="16" cy="12" r="1.8" fill="#ff007f" />
+        </svg>
+      </span>
+    `;
 
-      targetEl.dataset.wpsName = displayName;
-      targetEl.dataset.wpsColor = color;
-      targetEl.dataset.wpsReplaced = 'true';
-
-      const switchLogoSvg = `
-        <span style="display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: #ffffff; border-radius: 6px; box-shadow: 0 0 10px ${color}60; flex-shrink: 0; margin-right: 8px;">
-          <svg viewBox="0 0 24 24" style="width: 15px; height: 15px; display: block;">
-            <rect x="2" y="6" width="20" height="12" rx="6" fill="${color}" />
-            <circle cx="16" cy="12" r="4.2" fill="#ffffff" />
-            <circle cx="16" cy="12" r="1.8" fill="#ff007f" />
-          </svg>
+    targetEl.innerHTML = `
+      <span class="wps-header-brand" style="display: inline-flex !important; align-items: center !important; max-width: 260px !important; overflow: hidden !important; vertical-align: middle !important; line-height: 1 !important; user-select: none !important;">
+        ${switchLogoSvg}
+        <span style="font-size: 19px !important; font-weight: 700 !important; color: #f8fafc !important; letter-spacing: -0.2px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; font-family: inherit !important;" title="${escapeHtml(displayName)}">
+          ${escapeHtml(displayName)}
         </span>
-      `;
+      </span>
+    `;
+    targetEl.style.display = 'inline-flex';
+    targetEl.style.alignItems = 'center';
 
-      targetEl.innerHTML = `
-        <span style="display: inline-flex; align-items: center; max-width: 250px; overflow: hidden; vertical-align: middle;">
-          ${switchLogoSvg}
-          <span style="font-size: 19px; font-weight: 700; color: #f8fafc; letter-spacing: -0.2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${escapeHtml(displayName)}">
-            ${escapeHtml(displayName)}
-          </span>
-        </span>
-      `;
-      targetEl.style.display = 'inline-flex';
-      targetEl.style.alignItems = 'center';
-    }
+    console.log(`%c[WP Switcher]%c Header replaced -> "${displayName}" (${color})`, 'color: #00e676; font-weight: bold;', 'color: inherit;');
   }
 
   function escapeHtml(str) {
@@ -154,7 +233,7 @@
   }
 
   // Periodic check & mutation observer to handle React SPA re-renders
-  setInterval(applyTabAccentTheme, 1000);
+  setInterval(applyTabAccentTheme, 500);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', applyTabAccentTheme);
