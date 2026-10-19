@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WP Switcher</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-box">
+          <svg viewBox="0 0 32 32" class="switch-icon-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect width="32" height="32" rx="7" fill="#ffffff"/>
+            <rect x="6" y="11" width="20" height="10" rx="5" fill="#ede9fe"/>
+            <circle cx="20" cy="16" r="4.2" fill="#9333ea"/>
+            <circle cx="19.2" cy="15.2" r="1.5" fill="#ff007f"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <h1>WP Switcher</h1>
+          <span class="brand-tagline">Multi-Account Manager</span>
+        </div>
+      </div>
+      <div class="header-meta">
+        <div id="activeTabsBadge" class="status-pill offline" title="Live WhatsApp tabs open">
+          <span class="status-dot"></span>
+          <span id="activeTabsCount">0 Active</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Instant Add Button (Opens new tab & focuses immediately) -->
+    <div class="action-bar">
+      <button id="addNewAccountBtn" class="btn btn-primary btn-block" title="Open a new tab to scan QR code">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="12" y1="5" x2="12" y2="19"/>
+          <line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        <span>Add New Account</span>
+      </button>
+    </div>
+
+    <!-- Accounts List -->
+    <main class="content-area">
+      <div class="section-title-row">
+        <h2>Your Accounts</h2>
+        <span id="accountsCountLabel" class="text-muted">0 accounts</span>
+      </div>
+
+      <div id="accountsList" class="accounts-list">
+        <!-- Rendered dynamically via popup.js -->
+      </div>
+
+      <!-- Zero-State (if no accounts yet) -->
+      <div id="emptyState" class="empty-state" style="display: none;">
+        <div class="empty-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="2" y="6" width="20" height="12" rx="6"/>
+            <circle cx="16" cy="12" r="4"/>
+          </svg>
+        </div>
+        <h3>No WhatsApp Accounts Added</h3>
+        <p>Open WhatsApp Web or click <strong>Add New Account</strong> to pair an account.</p>
+        <button id="emptyAddBtn" class="btn btn-primary btn-sm">Add Account</button>
+      </div>
+    </main>
+
+    <!-- Footer with Version & Check for Updates -->
+    <footer class="app-footer">
+      <div class="footer-left">
+        <button id="checkUpdateBtn" class="update-check-btn" title="Check for updates on GitHub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+          </svg>
+          <span id="updateBtnText">Check for Updates</span>
+        </button>
+      </div>
+      <div class="footer-right">
+        <button id="freshStartBtn" class="btn-link-danger" title="Clear all data and restart completely fresh">Fresh Start</button>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Modal: Edit Account (Pencil) -->
+  <div id="editModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"/>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+            </svg>
+          </div>
+          <h3>Edit Account</h3>
+        </div>
+        <button id="closeEditModalBtn" class="modal-close-btn">&times;</button>
+      </div>
+
+      <form id="editAccountForm">
+        <div class="form-group">
+          <label for="editAccountNameInput">Account Display Name</label>
+          <input type="text" id="editAccountNameInput" required maxlength="32" placeholder="e.g. Work Sales, Support VIP">
+          <span class="field-hint">Customize how this account appears in your switcher.</span>
+        </div>
+
+        <div class="form-group mt-2">
+          <label>Theme Color</label>
+          <div id="editColorChipsGroup" class="color-picker-group">
+            <button type="button" class="color-chip active" data-color="#a855f7" style="--chip-color: #a855f7;"></button>
+            <button type="button" class="color-chip" data-color="#ff007f" style="--chip-color: #ff007f;"></button>
+            <button type="button" class="color-chip" data-color="#00e676" style="--chip-color: #00e676;"></button>
+            <button type="button" class="color-chip" data-color="#00b0ff" style="--chip-color: #00b0ff;"></button>
+            <button type="button" class="color-chip" data-color="#ffab00" style="--chip-color: #ffab00;"></button>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" id="cancelEditModalBtn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Update Notification -->
+  <div id="updateModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon-badge update">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/>
+              <line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <h3 id="updateModalTitle">Update Status</h3>
+        </div>
+        <button id="closeUpdateModalBtn" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="updateModalMessage" class="confirm-text">Checking GitHub releases...</p>
+        <div id="updateNotesBox" class="update-notes-box" style="display: none;"></div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="closeUpdateActionBtn" class="btn btn-secondary">Close</button>
+        <a id="downloadUpdateBtn" href="https://github.com/expgg/WP-Switcher/releases/latest" target="_blank" class="btn btn-primary" style="display: none; text-decoration: none;">Download Update (.zip)</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="confirmModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="confirmTitle">Remove Account</h3>
+        <button id="closeConfirmBtn" class="modal-close-btn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p id="confirmMessage" class="confirm-text">Are you sure you want to delete this account?</p>
+        <div class="warning-callout">
+          Open tabs for this account will be closed and local session tokens will be cleared.
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" id="cancelConfirmBtn" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="executeConfirmBtn" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" style="display: none;">
+    <span class="toast-pink-dot"></span>
+    <span id="toastMessage">Notification</span>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
