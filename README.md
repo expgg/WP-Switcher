@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/Manifest-V3-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3">
   <img src="https://img.shields.io/badge/Privacy-100%25%20Local-ff007f?style=for-the-badge&logo=shield&logoColor=white" alt="100% Local">
   <img src="https://img.shields.io/badge/Chrome-Compatible-00e676?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome">
-  <img src="https://img.shields.io/badge/Version-1.0.0-00b0ff?style=for-the-badge" alt="Version 1.0.0">
+  <img src="https://img.shields.io/badge/Version-1.0.1-00b0ff?style=for-the-badge" alt="Version 1.0.1">
   <img src="https://img.shields.io/badge/License-MIT-ffab00?style=for-the-badge" alt="License: MIT">
 </p>
 
@@ -144,13 +144,17 @@ Click **Check for Updates** in the popup footer at any time. The extension will 
 - If a newer build is available, the popup displays release highlights and a direct 1-click download button.
 - Simply replace your local extension files or run `git pull` and click the extension reload icon on `chrome://extensions`.
 
-### Current Release: `v1.0.0`
-- ✨ Initial public release.
-- ⚡ Manifest V3 storage isolation engine (IndexedDB, Web Storage, Locks, BroadcastChannel).
-- 🎨 AMOLED dark theme with custom accent chips.
-- ✏️ Account metadata editor (custom aliases & theme colors).
-- 🔄 Automatic phone number, name, and profile picture synchronization.
-- 🛡️ Full reset & namespace wipe utilities.
+### Releases & Changelog
+
+#### `v1.0.1` (Current)
+- 🖼️ **Custom Avatar Upload**: Users can now upload and crop their own custom avatar images directly from the edit modal.
+- 📱 **Raw Phone Formatting**: Completely ditched country codes, quotes, and `+` artifacts for pure, clean national digits.
+- 🎨 **Creator Credits Footer**: Custom animated glowing pulse footer credit linked to [r1fat.pages.dev](https://r1fat.pages.dev).
+- 🧹 **Streamlined Footer**: Repositioned GitHub Update Checker and removed legacy wipe controls.
+
+#### `v1.0.0`
+- ✨ Initial public release with Manifest V3 multi-account isolation engine.
+- 🎨 AMOLED dark theme with custom accent chips and 1-click tab switching.
 
 ---
 

@@ -68,18 +68,22 @@
       </div>
     </main>
 
-    <!-- Footer with Version & Check for Updates -->
+    <!-- Footer with Check for Updates & Custom Author Credits -->
     <footer class="app-footer">
-      <div class="footer-left">
-        <button id="checkUpdateBtn" class="update-check-btn" title="Check for updates on GitHub">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-          </svg>
-          <span id="updateBtnText">Check for Updates</span>
-        </button>
-      </div>
-      <div class="footer-right">
-        <button id="freshStartBtn" class="btn-link-danger" title="Clear all data and restart completely fresh">Fresh Start</button>
+      <button id="checkUpdateBtn" class="update-check-btn" title="Check for updates on GitHub">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span id="updateBtnText">Check for Updates</span>
+      </button>
+
+      <div class="creator-credits">
+        <span>Made with</span>
+        <svg class="heart-icon pulse-heart" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+        </svg>
+        <span>by</span>
+        <a href="https://r1fat.pages.dev" target="_blank" rel="noopener noreferrer" class="creator-link pulse-text">r1fat</a>
       </div>
     </footer>
   </div>
@@ -101,10 +105,44 @@
       </div>
 
       <form id="editAccountForm">
-        <div class="form-group">
+        <!-- Avatar Uploader -->
+        <div class="form-group avatar-edit-section">
+          <label>Account Avatar</label>
+          <div class="avatar-edit-row">
+            <div id="editAvatarPreview" class="edit-avatar-preview">
+              <span id="editAvatarInitial">W</span>
+              <img id="editAvatarImg" src="" alt="Avatar" style="display: none;">
+            </div>
+            <div class="avatar-edit-btns">
+              <button type="button" id="uploadAvatarBtn" class="btn btn-secondary btn-sm">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Upload Avatar
+              </button>
+              <button type="button" id="resetAvatarBtn" class="btn-icon-subtle" title="Reset to default avatar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>
+              <input type="file" id="avatarFileInput" accept="image/*" style="display: none;">
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group mt-2">
           <label for="editAccountNameInput">Account Display Name</label>
           <input type="text" id="editAccountNameInput" required maxlength="32" placeholder="e.g. Work Sales, Support VIP">
           <span class="field-hint">Customize how this account appears in your switcher.</span>
+        </div>
+
+        <div class="form-group mt-2">
+          <label for="editAccountPhoneInput">Phone Number (Raw)</label>
+          <input type="text" id="editAccountPhoneInput" maxlength="20" placeholder="e.g. 01773185817">
+          <span class="field-hint">Raw number without country codes or + prefix.</span>
         </div>
 
         <div class="form-group mt-2">

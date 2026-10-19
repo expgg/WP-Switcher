@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "WP Switcher",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Switch between multiple WhatsApp Web accounts with isolated, permanent sessions.",
   "author": "WP Switcher",
   "permissions": [

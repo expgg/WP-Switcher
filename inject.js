@@ -343,37 +343,45 @@
       const isLoggedIn = !!(paneSide || chatList || (rawWid && header));
       if (!isLoggedIn) return;
 
-      // Extract Phone
+      // Extract Phone - Clean raw number (strip quotes, country codes, +, etc.)
       let phone = '';
       if (rawWid) {
-        phone = rawWid.replace(/[@:].*$/, '');
-        if (!phone.startsWith('+')) phone = '+' + phone;
+        const rawClean = String(rawWid).replace(/['"\s]/g, '').replace(/[@:].*$/, '');
+        let digits = rawClean.replace(/\D/g, '');
+
+        // Ditch country codes (e.g. Bangladesh 8801... -> 01...)
+        if (digits.startsWith('880')) {
+          digits = '0' + digits.slice(3);
+        } else if (digits.length > 10 && digits.startsWith('1')) {
+          digits = digits.slice(1);
+        } else if (digits.length > 10 && digits.startsWith('91')) {
+          digits = digits.slice(2);
+        } else if (digits.length > 10 && digits.startsWith('44')) {
+          digits = '0' + digits.slice(2);
+        }
+        phone = digits;
       }
 
-      // Extract Name
+      // Extract Name (Filter out navigation titles like "Chats")
       let name = '';
+      const IGNORE_TITLES = new Set(['chats', 'status', 'channels', 'communities', 'new chat', 'menu', 'settings', 'profile', 'community', 'archived', 'starred', 'filter', 'search or start new chat']);
+
       const pushnameRaw = REAL_LS.getItem(P + 'pushname');
       if (pushnameRaw) {
         try {
           const parsed = JSON.parse(pushnameRaw);
-          if (typeof parsed === 'string' && parsed.trim()) name = parsed.trim();
+          if (typeof parsed === 'string' && parsed.trim() && !IGNORE_TITLES.has(parsed.trim().toLowerCase())) {
+            name = parsed.trim();
+          }
         } catch(e) {
-          if (pushnameRaw.trim()) name = pushnameRaw.trim();
+          const clean = pushnameRaw.replace(/['"\s]/g, '').trim();
+          if (clean && !IGNORE_TITLES.has(clean.toLowerCase())) name = clean;
         }
       }
 
       if (!name && window.Store && window.Store.Conn && window.Store.Conn.pushname) {
-        name = window.Store.Conn.pushname.trim();
-      }
-
-      if (!name && header) {
-        const btn = header.querySelector('[role="button"], button');
-        if (btn) {
-          const t = btn.getAttribute('title') || btn.getAttribute('aria-label') || '';
-          if (t && !t.toLowerCase().includes('profile') && !t.toLowerCase().includes('photo')) {
-            name = t.trim();
-          }
-        }
+        const pn = window.Store.Conn.pushname.trim();
+        if (!IGNORE_TITLES.has(pn.toLowerCase())) name = pn;
       }
 
       // Extract PFP (Profile Picture as Base64 Data URL)

@@ -26,10 +26,49 @@ function extractSessionFromUrl(url) {
   return 'main';
 }
 
-// Fetch saved sessions
+// Helper to clean raw phone number (strip quotes, country codes, +, etc.)
+function cleanPhoneNumber(raw) {
+  if (!raw) return '';
+  const clean = String(raw).replace(/['"\s]/g, '').replace(/[@:].*$/, '');
+  let digits = clean.replace(/\D/g, '');
+  if (digits.startsWith('880')) {
+    digits = '0' + digits.slice(3);
+  } else if (digits.length > 10 && digits.startsWith('1')) {
+    digits = digits.slice(1);
+  } else if (digits.length > 10 && digits.startsWith('91')) {
+    digits = digits.slice(2);
+  } else if (digits.length > 10 && digits.startsWith('44')) {
+    digits = '0' + digits.slice(2);
+  }
+  return digits;
+}
+
+// Fetch saved sessions & sanitize legacy format
 async function getSavedSessions() {
   const data = await chrome.storage.local.get(STORAGE_KEY_SESSIONS);
-  return Array.isArray(data[STORAGE_KEY_SESSIONS]) ? data[STORAGE_KEY_SESSIONS] : [];
+  const sessions = Array.isArray(data[STORAGE_KEY_SESSIONS]) ? data[STORAGE_KEY_SESSIONS] : [];
+  
+  let modified = false;
+  sessions.forEach(s => {
+    if (s.phone) {
+      const cleaned = cleanPhoneNumber(s.phone);
+      if (cleaned !== s.phone) {
+        s.phone = cleaned;
+        modified = true;
+      }
+    }
+    // Clean up generic "Chats" or "WhatsApp Account" legacy titles
+    if (!s.hasCustomName && (s.name === 'Chats' || s.name === 'WhatsApp Account')) {
+      s.name = s.phone || (s.isMain ? 'Main Account' : ('Account ' + s.id.replace('acc_', '')));
+      modified = true;
+    }
+  });
+
+  if (modified) {
+    await chrome.storage.local.set({ [STORAGE_KEY_SESSIONS]: sessions });
+  }
+
+  return sessions;
 }
 
 // Save sessions
@@ -160,8 +199,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sessions[existingIdx] = {
           ...existing,
           name: existing.hasCustomName ? existing.name : (session.name || existing.name),
-          pfp: session.pfp || existing.pfp,
-          phone: session.phone || existing.phone || '',
+          pfp: existing.hasCustomPfp ? existing.pfp : (session.pfp || existing.pfp),
+          phone: existing.hasCustomPhone ? existing.phone : (cleanPhoneNumber(session.phone) || existing.phone || ''),
           isMain: session.isMain || existing.isMain || false,
           lastActive: Date.now()
         };
@@ -314,10 +353,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
 
-  // 9. Update Account Details (Manual name edit & theme color)
+  // 9. Update Account Details (Manual name edit, phone, custom avatar & theme color)
   if (message.type === 'UPDATE_ACCOUNT_DETAILS') {
     (async () => {
-      const { sessionId, name, color } = message;
+      const { sessionId, name, phone, color, pfp, resetPfp } = message;
       if (!sessionId) {
         sendResponse({ success: false, error: 'Missing sessionId' });
         return;
@@ -329,8 +368,19 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           sessions[idx].name = name.trim();
           sessions[idx].hasCustomName = true;
         }
+        if (phone !== undefined) {
+          sessions[idx].phone = cleanPhoneNumber(phone);
+          sessions[idx].hasCustomPhone = true;
+        }
         if (color) {
           sessions[idx].color = color;
+        }
+        if (pfp) {
+          sessions[idx].pfp = pfp;
+          sessions[idx].hasCustomPfp = true;
+        } else if (resetPfp) {
+          sessions[idx].pfp = null;
+          sessions[idx].hasCustomPfp = false;
         }
         await saveSessions(sessions);
         sendResponse({ success: true, session: sessions[idx] });
