@@ -32,11 +32,8 @@
       const session = sessions.find(s => s.id === currentSessionId);
 
       const color = (session && session.color) ? session.color : '#a855f7';
-      const name = (session && session.name && session.name !== 'Chats') 
-        ? session.name 
-        : (currentSessionId === 'main' ? 'Main Account' : ('Account ' + currentSessionId.replace('acc_', '')));
 
-      // 1. Sleek 4px accent line across the entire top edge of the tab
+      // 1. Clean flat 3px solid accent bar across top edge (no glow, no fade)
       let bar = document.getElementById('wps-tab-accent-bar');
       if (!bar) {
         bar = document.createElement('div');
@@ -48,46 +45,20 @@
         top: 0 !important;
         left: 0 !important;
         right: 0 !important;
-        height: 4px !important;
+        height: 3px !important;
         background: ${color} !important;
-        box-shadow: 0 0 12px ${color}, 0 0 20px ${color}80 !important;
+        box-shadow: none !important;
+        filter: none !important;
+        opacity: 1 !important;
         z-index: 2147483647 !important;
         pointer-events: none !important;
       `;
 
-      // 2. Floating account pill badge at top-right of WhatsApp Web
-      let pill = document.getElementById('wps-tab-account-pill');
-      if (!pill) {
-        pill = document.createElement('div');
-        pill.id = 'wps-tab-account-pill';
-        document.documentElement.appendChild(pill);
+      // 2. Remove floating name/number badge pill
+      const pill = document.getElementById('wps-tab-account-pill');
+      if (pill) {
+        pill.remove();
       }
-      pill.innerHTML = `
-        <span style="width: 7px; height: 7px; border-radius: 50%; background: ${color}; box-shadow: 0 0 6px ${color}; flex-shrink: 0;"></span>
-        <span style="max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escapeHtml(name)}</span>
-      `;
-      pill.style.cssText = `
-        position: fixed !important;
-        top: 9px !important;
-        right: 80px !important;
-        z-index: 2147483646 !important;
-        display: flex !important;
-        align-items: center !important;
-        gap: 6px !important;
-        background: rgba(14, 10, 26, 0.88) !important;
-        backdrop-filter: blur(8px) !important;
-        border: 1px solid ${color}60 !important;
-        border-radius: 9999px !important;
-        padding: 3px 10px !important;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-        font-size: 11px !important;
-        font-weight: 700 !important;
-        color: #ffffff !important;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.5), 0 0 10px ${color}30 !important;
-        pointer-events: none !important;
-        user-select: none !important;
-        transition: all 0.2s ease !important;
-      `;
     } catch (e) {}
   }
 
