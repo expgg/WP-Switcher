@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/Manifest-V3-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3">
   <img src="https://img.shields.io/badge/Privacy-100%25%20Local-ff007f?style=for-the-badge&logo=shield&logoColor=white" alt="100% Local">
   <img src="https://img.shields.io/badge/Chrome-Compatible-00e676?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome">
-  <img src="https://img.shields.io/badge/Version-1.0.2-00b0ff?style=for-the-badge" alt="Version 1.0.2">
+  <img src="https://img.shields.io/badge/Version-1.0.3-00b0ff?style=for-the-badge" alt="Version 1.0.3">
   <img src="https://img.shields.io/badge/License-MIT-ffab00?style=for-the-badge" alt="License: MIT">
 </p>
 
@@ -146,7 +146,11 @@ Click **Check for Updates** in the popup footer at any time. The extension will 
 
 ### Releases & Changelog
 
-#### `v1.0.2` (Current)
+#### `v1.0.3` (Current)
+- 🚫 **Zero Unscanned Session Pollution**: Clicking "Add New Account" no longer creates or saves placeholder accounts into storage. A session is strictly saved only after the QR code is scanned and login tokens are verified.
+- 🧹 **Automatic Scratch Cleanup**: If a user opens a new account tab and closes it without scanning, any temporary scratch tokens are automatically purged on tab close.
+
+#### `v1.0.2`
 - 📌 **Always-Pinned Docked Footer**: The update checker and author credits are permanently docked at the bottom of the popup window and never scroll away.
 - 📜 **AAA Custom Scrollbars for Multi-Accounts**: Smooth internal scrolling with gradient purple-to-pink glowing scrollbars for seamless scalability when managing 10, 20, or 50+ accounts.
 - 🎨 **Full Account Card Theming**: The entire account card (border, left accent bar, background tint, action buttons, and status dots) is dynamically themed by the account's accent color.

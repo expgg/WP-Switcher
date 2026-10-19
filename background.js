@@ -46,9 +46,25 @@ function cleanPhoneNumber(raw) {
 // Fetch saved sessions & sanitize legacy format
 async function getSavedSessions() {
   const data = await chrome.storage.local.get(STORAGE_KEY_SESSIONS);
-  const sessions = Array.isArray(data[STORAGE_KEY_SESSIONS]) ? data[STORAGE_KEY_SESSIONS] : [];
+  let sessions = Array.isArray(data[STORAGE_KEY_SESSIONS]) ? data[STORAGE_KEY_SESSIONS] : [];
   
   let modified = false;
+
+  // Filter out any leftover unscanned placeholder sessions
+  const filtered = sessions.filter(s => {
+    if (!s || !s.id) return false;
+    if (s.name && s.name.includes('Scanning...')) {
+      modified = true;
+      return false;
+    }
+    return true;
+  });
+
+  if (filtered.length !== sessions.length) {
+    sessions = filtered;
+    modified = true;
+  }
+
   sessions.forEach(s => {
     if (s.phone) {
       const cleaned = cleanPhoneNumber(s.phone);
@@ -170,8 +186,20 @@ async function wipeSessionData(sessionId) {
 }
 
 // Tab cleanup
-chrome.tabs.onRemoved.addListener((tabId) => {
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  const sessionId = activeTabSessions.get(tabId);
   activeTabSessions.delete(tabId);
+
+  // If this session never logged in (has no stored session in wps_sessions), wipe temporary tokens
+  if (sessionId && sessionId !== 'main') {
+    try {
+      const sessions = await getSavedSessions();
+      const isSaved = sessions.some(s => s.id === sessionId);
+      if (!isSaved) {
+        await wipeSessionData(sessionId);
+      }
+    } catch (e) {}
+  }
 });
 
 // Runtime Messages
@@ -190,6 +218,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     (async () => {
       const { session } = message;
       if (!session || !session.sessionId) return;
+      // Only store session if user is logged in (scanned & obtained tokens/phone)
+      if (!session.isLoggedIn && !session.phone) return;
 
       const sessions = await getSavedSessions();
       const existingIdx = sessions.findIndex(s => s.id === session.sessionId);
@@ -205,11 +235,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           lastActive: Date.now()
         };
       } else {
+        // Only record new account when verified logged in
         sessions.push({
           id: session.sessionId,
           name: session.name || (session.isMain ? 'Main Account' : ('Account ' + session.sessionId)),
           pfp: session.pfp || null,
-          phone: session.phone || '',
+          phone: cleanPhoneNumber(session.phone) || '',
           isMain: !!session.isMain,
           createdAt: Date.now(),
           lastActive: Date.now()
@@ -245,17 +276,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       await chrome.windows.update(newTab.windowId, { focused: true });
       activeTabSessions.set(newTab.id, newSessionId);
 
-      // Add placeholder session so user sees it right away
-      const sessions = await getSavedSessions();
-      sessions.push({
-        id: newSessionId,
-        name: 'New Account (Scanning...)',
-        pfp: null,
-        isMain: false,
-        createdAt: Date.now()
-      });
-      await saveSessions(sessions);
-
+      // Do NOT store placeholder session! It is only recorded once user scans QR & logs in.
       sendResponse({ success: true, tabId: newTab.id, sessionId: newSessionId });
     })();
     return true;
