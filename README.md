@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/Manifest-V3-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3">
   <img src="https://img.shields.io/badge/Privacy-100%25%20Local-ff007f?style=for-the-badge&logo=shield&logoColor=white" alt="100% Local">
   <img src="https://img.shields.io/badge/Chrome-Compatible-00e676?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome">
-  <img src="https://img.shields.io/badge/Version-1.0.6-00b0ff?style=for-the-badge" alt="Version 1.0.6">
+  <img src="https://img.shields.io/badge/Version-1.0.7-00b0ff?style=for-the-badge" alt="Version 1.0.7">
   <img src="https://img.shields.io/badge/License-MIT-ffab00?style=for-the-badge" alt="License: MIT">
 </p>
 
@@ -146,7 +146,13 @@ Click **Check for Updates** in the popup footer at any time. The extension will 
 
 ### Releases & Changelog
 
-#### `v1.0.6` (Current)
+#### `v1.0.7` (Current)
+- 🏷️ **Native WhatsApp Header Preserved**: Kept the official "WhatsApp" header title completely untouched and native.
+- ✨ **Beside-Header Account Indicator**: Placed the WP Switcher switch logo and account name/alias (e.g. `Teletalk Number`) elegantly directly beside the "WhatsApp" text in a themed glassmorphic pill badge.
+- 🔍 **Zero Search Box Interference**: Strict bounding-box exclusions guarantee the search input is never touched, overlapped, or modified.
+- 🎨 **Adaptive Theme Syncing**: The badge's border and icon dynamically mirror the active account's custom accent color and alias.
+
+#### `v1.0.6`
 - 🚀 **Robust Multi-Strategy Header Detection**: Added bidirectional Unicode normalization (`\u200E` directional marks), SVG container detection, and layout-based fallback to reliably detect and replace WhatsApp Web's top-left branding across all modern UI builds.
 - 🏷️ **Native Header Title Replacement**: Replaced the default top-left "WhatsApp" title in WhatsApp Web with the WP Switcher switch logo and current active account name/alias.
 - 🎨 **Adaptive Theme Syncing**: The header switch badge dynamically mirrors the account's custom accent color and updates immediately when an alias or theme is edited in the popup.

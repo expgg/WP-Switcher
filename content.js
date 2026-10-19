@@ -72,102 +72,59 @@
         pill.remove();
       }
 
-      // 3. Replace default "WhatsApp" header title with Logo + Account Name
-      replaceWhatsAppHeaderTitle(displayName, color);
+      // 3. Attach App Switch Logo & Account Name beside the "WhatsApp" title
+      attachAccountBadgeBesideTitle(displayName, color);
 
     } catch (e) {}
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Multi-Strategy WhatsApp Header / Logo Element Detector
+  // Find WhatsApp Title Element (Preserving native "WhatsApp" text)
   // ═══════════════════════════════════════════════════════════════════════════
-  function findWhatsAppHeaderElement() {
-    // 0. If already replaced and still alive in DOM, return our element
-    const existing = document.querySelector('[data-wps-replaced="true"]');
-    if (existing && document.contains(existing)) {
-      return existing;
-    }
+  function findWhatsAppTitleElement() {
+    const searchBox = document.querySelector('[role="search"], [data-testid="chat-list-search"], [role="combobox"]');
 
-    // Strategy 1: Normalized Text Content Match (handles unicode directional marks \u200E, \u200F, \u202A, etc.)
-    const textCandidates = document.querySelectorAll('h1, h2, h3, h4, span, div, a, p');
-    let bestTextEl = null;
+    // 1. Scan for element containing exactly "WhatsApp" or "Chats" in top-left
+    const candidates = document.querySelectorAll('h1, h2, h3, h4, span, div, a');
+    let bestEl = null;
     let smallestArea = Infinity;
 
-    for (const el of textCandidates) {
-      const raw = el.textContent || '';
-      if (!raw || raw.length > 50) continue;
+    for (const el of candidates) {
+      if (searchBox && searchBox.contains(el)) continue;
+      if (el.id === 'wps-header-account-badge' || el.closest('#wps-header-account-badge')) continue;
+      if (el.querySelector('input, [contenteditable="true"]')) continue;
 
-      // Strip all whitespace, directional marks (\u2000-\u206F), and invisible unicode characters
+      const raw = el.textContent || '';
+      if (!raw || raw.length > 40) continue;
+
       const clean = raw.replace(/[\u2000-\u206F\uFEFF\s\r\n\t]+/g, '').toLowerCase();
       if (clean === 'whatsapp' || clean === 'chats') {
         const rect = el.getBoundingClientRect();
-        if (rect.top >= 0 && rect.top < 140 && rect.left >= 30 && rect.left < 550 && rect.width > 0 && rect.height > 0) {
+        // Title is strictly in top-left: top < 80, left < 260
+        if (rect.top >= 0 && rect.top < 80 && rect.left >= 30 && rect.left < 260 && rect.width > 0 && rect.height > 0) {
           const area = rect.width * rect.height;
           if (area < smallestArea) {
             smallestArea = area;
-            bestTextEl = el;
+            bestEl = el;
           }
         }
       }
     }
-    if (bestTextEl) {
-      const heading = bestTextEl.closest('h1, h2, h3, [role="heading"]');
-      return heading || bestTextEl;
-    }
+    if (bestEl) return bestEl;
 
-    // Strategy 2: Data-icon / SVG brand logo
-    const iconCandidates = document.querySelectorAll(
-      '[data-icon="whatsapp"], [data-icon="whatsapp-logo"], [data-icon="whatsapp-wordmark"], [data-icon*="whatsapp"], [data-testid*="whatsapp-logo"], [data-testid="chatlist-header"]'
-    );
-    for (const el of iconCandidates) {
-      const rect = el.getBoundingClientRect();
-      if (rect.top >= 0 && rect.top < 140 && rect.left >= 30 && rect.left < 550 && rect.width > 0) {
-        return el;
-      }
-    }
-
-    // Strategy 3: Aria-label or title or alt matching "WhatsApp" (case-insensitive)
-    const ariaCandidates = document.querySelectorAll(
-      '[aria-label*="whatsapp" i], [title*="whatsapp" i], img[alt*="whatsapp" i]'
-    );
-    for (const el of ariaCandidates) {
-      const rect = el.getBoundingClientRect();
-      if (rect.top >= 0 && rect.top < 140 && rect.left >= 30 && rect.left < 550 && rect.width > 0 && rect.width < 400) {
-        return el;
-      }
-    }
-
-    // Strategy 4: Structural layout - Container to the left of action buttons (Menu, New Chat)
-    const actionBtn = document.querySelector(
-      '[data-icon="menu"], [aria-label*="menu" i], [data-icon="new-chat-outline"], [data-icon="chat"], [aria-label*="new chat" i]'
-    );
+    // 2. Fallback: Search by header row action button
+    const actionBtn = document.querySelector('[data-icon="menu"], [aria-label*="menu" i], [data-icon="new-chat-outline"], [data-icon="chat"]');
     if (actionBtn) {
       let row = actionBtn.parentElement;
       for (let depth = 0; depth < 5 && row; depth++) {
         const rect = row.getBoundingClientRect();
-        if (rect.top >= 0 && rect.top < 140 && rect.height >= 30 && rect.height <= 90 && rect.left < 300) {
+        if (rect.top >= 0 && rect.top < 80 && rect.height >= 30 && rect.height <= 80 && rect.left < 200) {
           const firstChild = row.firstElementChild;
           if (firstChild && firstChild !== actionBtn && !firstChild.contains(actionBtn)) {
-            const fcRect = firstChild.getBoundingClientRect();
-            if (fcRect.left >= 30 && fcRect.left < 400 && fcRect.width > 0) {
-              return firstChild;
-            }
+            return firstChild;
           }
         }
         row = row.parentElement;
-      }
-    }
-
-    // Strategy 5: Any SVG in top-left chatlist header quadrant
-    const svgs = document.querySelectorAll('svg');
-    for (const svg of svgs) {
-      const rect = svg.getBoundingClientRect();
-      if (rect.top >= 5 && rect.top < 100 && rect.left >= 45 && rect.left < 350 && rect.width >= 15 && rect.height >= 15) {
-        const parentBtn = svg.closest('button, [role="button"]');
-        const aria = parentBtn ? (parentBtn.getAttribute('aria-label') || '') : '';
-        if (!/search|menu|chat|new|status|channel|community|settings/i.test(aria)) {
-          return svg.closest('span, div') || svg.parentElement || svg;
-        }
       }
     }
 
@@ -175,32 +132,57 @@
   }
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // Replace "WhatsApp" Header Title with WP Switcher Logo & Account Name
+  // Attach App Switch Logo & Account Name Beside the "WhatsApp" Title
   // ═══════════════════════════════════════════════════════════════════════════
-  function replaceWhatsAppHeaderTitle(displayName, color) {
+  function attachAccountBadgeBesideTitle(displayName, color) {
     if (!displayName) return;
 
-    let targetEl = findWhatsAppHeaderElement();
-    if (!targetEl) return;
-
-    // If target is SVG or path, climb up to a container element
-    if (targetEl.tagName && (targetEl.tagName.toLowerCase() === 'svg' || targetEl.tagName.toLowerCase() === 'path')) {
-      targetEl = targetEl.closest('span, div, a, h1, h2, h3') || targetEl.parentElement;
+    // Cleanup any erroneous element that might have been placed in the search box earlier
+    const strayBrand = document.querySelectorAll('.wps-header-brand');
+    for (const b of strayBrand) {
+      if (b.closest('[role="search"], [data-testid="chat-list-search"], [role="combobox"], input')) {
+        b.remove();
+      }
     }
-    if (!targetEl) return;
 
-    // Avoid re-rendering if already matching current state
-    if (targetEl.dataset.wpsName === displayName && targetEl.dataset.wpsColor === color) {
+    const titleEl = findWhatsAppTitleElement();
+    if (!titleEl) return;
+
+    // The heading wrapper or direct title element
+    const anchorEl = titleEl.closest('h1, h2, h3, [role="heading"]') || titleEl;
+
+    // Ensure flex layout on parent so title and badge sit horizontally side-by-side
+    const parent = anchorEl.parentElement;
+    if (parent) {
+      if (getComputedStyle(parent).display !== 'flex') {
+        parent.style.display = 'flex';
+        parent.style.alignItems = 'center';
+      }
+    }
+
+    let badge = document.getElementById('wps-header-account-badge');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.id = 'wps-header-account-badge';
+      anchorEl.after(badge);
+    } else {
+      // Keep badge positioned directly after anchorEl if React re-ordered nodes
+      if (badge.previousElementSibling !== anchorEl && anchorEl.parentElement) {
+        anchorEl.after(badge);
+      }
+    }
+
+    // Skip re-rendering innerHTML if data hasn't changed
+    if (badge.dataset.wpsName === displayName && badge.dataset.wpsColor === color) {
       return;
     }
 
-    targetEl.dataset.wpsName = displayName;
-    targetEl.dataset.wpsColor = color;
-    targetEl.dataset.wpsReplaced = 'true';
+    badge.dataset.wpsName = displayName;
+    badge.dataset.wpsColor = color;
 
     const switchLogoSvg = `
-      <span style="display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 22px !important; height: 22px !important; background: #ffffff !important; border-radius: 6px !important; box-shadow: 0 0 10px ${color}80 !important; flex-shrink: 0 !important; margin-right: 8px !important;">
-        <svg viewBox="0 0 24 24" style="width: 15px !important; height: 15px !important; display: block !important;">
+      <span style="display: inline-flex !important; align-items: center !important; justify-content: center !important; width: 18px !important; height: 18px !important; background: #ffffff !important; border-radius: 5px !important; box-shadow: 0 0 8px ${color}80 !important; flex-shrink: 0 !important;">
+        <svg viewBox="0 0 24 24" style="width: 12px !important; height: 12px !important; display: block !important;">
           <rect x="2" y="6" width="20" height="12" rx="6" fill="${color}" />
           <circle cx="16" cy="12" r="4.2" fill="#ffffff" />
           <circle cx="16" cy="12" r="1.8" fill="#ff007f" />
@@ -208,18 +190,34 @@
       </span>
     `;
 
-    targetEl.innerHTML = `
-      <span class="wps-header-brand" style="display: inline-flex !important; align-items: center !important; max-width: 260px !important; overflow: hidden !important; vertical-align: middle !important; line-height: 1 !important; user-select: none !important;">
-        ${switchLogoSvg}
-        <span style="font-size: 19px !important; font-weight: 700 !important; color: #f8fafc !important; letter-spacing: -0.2px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; font-family: inherit !important;" title="${escapeHtml(displayName)}">
-          ${escapeHtml(displayName)}
-        </span>
+    badge.style.cssText = `
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 7px !important;
+      background: rgba(255, 255, 255, 0.08) !important;
+      border: 1px solid ${color}60 !important;
+      box-shadow: 0 0 10px ${color}30, inset 0 0 6px ${color}15 !important;
+      padding: 3px 10px 3px 6px !important;
+      border-radius: 16px !important;
+      margin-left: 10px !important;
+      max-width: 220px !important;
+      overflow: hidden !important;
+      cursor: default !important;
+      vertical-align: middle !important;
+      user-select: none !important;
+      transition: all 0.2s ease !important;
+      z-index: 10 !important;
+      flex-shrink: 0 !important;
+    `;
+
+    badge.innerHTML = `
+      ${switchLogoSvg}
+      <span style="font-size: 13px !important; font-weight: 600 !important; color: #f1f5f9 !important; letter-spacing: -0.1px !important; overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; font-family: inherit !important;" title="${escapeHtml(displayName)}">
+        ${escapeHtml(displayName)}
       </span>
     `;
-    targetEl.style.display = 'inline-flex';
-    targetEl.style.alignItems = 'center';
 
-    console.log(`%c[WP Switcher]%c Header replaced -> "${displayName}" (${color})`, 'color: #00e676; font-weight: bold;', 'color: inherit;');
+    console.log(`%c[WP Switcher]%c Badge placed beside WhatsApp title -> "${displayName}" (${color})`, 'color: #00e676; font-weight: bold;', 'color: inherit;');
   }
 
   function escapeHtml(str) {
