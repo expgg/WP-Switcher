@@ -157,6 +157,9 @@
     const initial = displayName.charAt(0).toUpperCase();
     const accentColor = session.color || '#a855f7';
 
+    // Theme the entire account card by its chosen accent color
+    card.style.setProperty('--card-accent', accentColor);
+
     // Avatar HTML: use real/custom PFP if set, else initial letter
     let avatarInner = `<span style="color: ${accentColor};">${initial}</span>`;
     if (session.pfp) {
@@ -165,7 +168,7 @@
 
     card.innerHTML = `
       <div class="account-left">
-        <div class="avatar-wrap" style="border-color: ${accentColor};">
+        <div class="avatar-wrap">
           ${avatarInner}
           ${isLive ? '<span class="online-dot"></span>' : ''}
         </div>

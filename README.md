@@ -10,7 +10,7 @@
   <img src="https://img.shields.io/badge/Manifest-V3-a855f7?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Manifest V3">
   <img src="https://img.shields.io/badge/Privacy-100%25%20Local-ff007f?style=for-the-badge&logo=shield&logoColor=white" alt="100% Local">
   <img src="https://img.shields.io/badge/Chrome-Compatible-00e676?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Chrome">
-  <img src="https://img.shields.io/badge/Version-1.0.1-00b0ff?style=for-the-badge" alt="Version 1.0.1">
+  <img src="https://img.shields.io/badge/Version-1.0.2-00b0ff?style=for-the-badge" alt="Version 1.0.2">
   <img src="https://img.shields.io/badge/License-MIT-ffab00?style=for-the-badge" alt="License: MIT">
 </p>
 
@@ -146,15 +146,19 @@ Click **Check for Updates** in the popup footer at any time. The extension will 
 
 ### Releases & Changelog
 
-#### `v1.0.1` (Current)
-- 🖼️ **Custom Avatar Upload**: Users can now upload and crop their own custom avatar images directly from the edit modal.
-- 📱 **Raw Phone Formatting**: Completely ditched country codes, quotes, and `+` artifacts for pure, clean national digits.
-- 🎨 **Creator Credits Footer**: Custom animated glowing pulse footer credit linked to [r1fat.pages.dev](https://r1fat.pages.dev).
-- 🧹 **Streamlined Footer**: Repositioned GitHub Update Checker and removed legacy wipe controls.
+#### `v1.0.2` (Current)
+- 📌 **Always-Pinned Docked Footer**: The update checker and author credits are permanently docked at the bottom of the popup window and never scroll away.
+- 📜 **AAA Custom Scrollbars for Multi-Accounts**: Smooth internal scrolling with gradient purple-to-pink glowing scrollbars for seamless scalability when managing 10, 20, or 50+ accounts.
+- 🎨 **Full Account Card Theming**: The entire account card (border, left accent bar, background tint, action buttons, and status dots) is dynamically themed by the account's accent color.
+- 🌐 **In-Tab WhatsApp Accent Strip & Pill**: Injected a top 4px glowing indicator line and a floating account badge in the active WhatsApp Web tab itself for instant multi-account tab awareness.
+
+#### `v1.0.1`
+- 🖼️ **Custom Avatar Upload**: Users can now upload and crop custom avatar images with live preview.
+- 📱 **Raw Phone Formatting**: Clean national digits without quotes, country codes, or plus signs.
+- 💖 **Animated Author Credits**: Glowing pulse footer credit linked to [r1fat.pages.dev](https://r1fat.pages.dev).
 
 #### `v1.0.0`
 - ✨ Initial public release with Manifest V3 multi-account isolation engine.
-- 🎨 AMOLED dark theme with custom accent chips and 1-click tab switching.
 
 ---
 
